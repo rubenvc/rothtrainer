@@ -255,22 +255,6 @@
 
   let db = loadState();
 
-  // ---------- Detect a missed (unsubmitted) previous round ----------
-  (function reconcileMissedRound(){
-    const nowKey = minuteKey(new Date());
-    if(db.lastShownRoundKey !== null &&
-       db.lastShownRoundKey !== nowKey &&
-       db.lastShownRoundKey !== db.lastSubmittedRoundKey){
-      db.attempts.push({
-        n: db.attempts.length + 1,
-        ms: null,
-        dnf: true,
-        timestamp: new Date(roundStartMs(db.lastShownRoundKey)).toISOString()
-      });
-      saveState(db);
-    }
-  })();
-
   // ---------- Stats ----------
   function computeStats(){
     const successful = db.attempts.filter(a => !a.dnf);
@@ -350,13 +334,6 @@
     tickHandle = setInterval(()=>{
       if(minuteKey(new Date()) >= watchedRoundKey){
         stopTicking();
-        db.attempts.push({
-          n: db.attempts.length + 1,
-          ms: null,
-          dnf: true,
-          timestamp: new Date(roundStartMs(watchedRoundKey)).toISOString()
-        });
-        saveState(db);
         renderPlaceholder();
       }
     }, 1000);
