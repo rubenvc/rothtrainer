@@ -313,9 +313,9 @@
 
     const submittedNote = justSubmittedMs !== undefined
       ? '<div class="clock-status submitted">Clocked in</div><div class="clock-time">'+ (justSubmittedMs/1000).toFixed(3) +'<span class="secs">s</span></div>' +
-        '<div class="clock-msg">Next subscription opens at <b>'+ nextRoundLabel +'</b>.</div>'
+        '<div class="clock-msg">Next subscription opens at <b>'+ nextRoundLabel +'</b>.<br>Manually refresh browser at that time to fill in registration.</div>'
       : '<div class="clock-status">Standing by</div>' +
-        '<div class="clock-msg">Next subscription opens at <b>'+ nextRoundLabel +'</b>.</div>';
+        '<div class="clock-msg">Next subscription opens at <b>'+ nextRoundLabel +'</b>.<br>Manually refresh browser at that time to fill in registration.</div>';
 
     app.innerHTML =
       '<div class="clock-hero">' + submittedNote +
