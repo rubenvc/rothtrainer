@@ -308,7 +308,8 @@
       }).join('') + '</tbody></table>'
     ) : '<div class="empty-state">No laps yet — refresh right at the top of a minute to catch the next round.</div>';
 
-    const nextRoundDate = new Date(roundStartMs(minuteKey(new Date()) + 1));
+    const watchedRoundKey = minuteKey(new Date()) + 1;
+    const nextRoundDate = new Date(roundStartMs(watchedRoundKey));
     const nextRoundLabel = pad(nextRoundDate.getHours()) + ':' + pad(nextRoundDate.getMinutes());
 
     const submittedNote = justSubmittedMs !== undefined
@@ -345,6 +346,20 @@
       saveState(db);
       renderPlaceholder();
     });
+
+    tickHandle = setInterval(()=>{
+      if(minuteKey(new Date()) >= watchedRoundKey){
+        stopTicking();
+        db.attempts.push({
+          n: db.attempts.length + 1,
+          ms: null,
+          dnf: true,
+          timestamp: new Date(roundStartMs(watchedRoundKey)).toISOString()
+        });
+        saveState(db);
+        renderPlaceholder();
+      }
+    }, 1000);
   }
 
   function renderForm(roundKey){
