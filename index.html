@@ -237,9 +237,10 @@
       if(!raw) throw new Error('empty');
       const parsed = JSON.parse(raw);
       if(!Array.isArray(parsed.attempts)) throw new Error('bad shape');
+      if(typeof parsed.initialized !== 'boolean') parsed.initialized = true; // pre-existing saves count as initialized
       return parsed;
     }catch(e){
-      return { attempts: [], lastSubmittedRoundKey: null, lastShownRoundKey: null };
+      return { attempts: [], lastSubmittedRoundKey: null, lastShownRoundKey: null, initialized: false };
     }
   }
   function saveState(s){
@@ -340,7 +341,7 @@
       '</div>';
 
     document.getElementById('resetBtn').addEventListener('click', ()=>{
-      db = { attempts: [], lastSubmittedRoundKey: null, lastShownRoundKey: null };
+      db = { attempts: [], lastSubmittedRoundKey: null, lastShownRoundKey: null, initialized: false };
       saveState(db);
       renderPlaceholder();
     });
@@ -402,6 +403,10 @@
   // ---------- Entry point ----------
   const nowKey = minuteKey(new Date());
   if(db.lastSubmittedRoundKey === nowKey){
+    renderPlaceholder();
+  } else if(!db.initialized){
+    db.initialized = true;
+    saveState(db);
     renderPlaceholder();
   } else {
     db.lastShownRoundKey = nowKey;
