@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RothTrainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --dial-cream: #f2ede1;
+    --dial-cream-2: #ece5d4;
+    --navy: #1b2a41;
+    --navy-soft: #33455e;
+    --chrono-red: #b23a2e;
+    --brass: #a9814f;
+    --brass-light: #d3b784;
+    --graphite: #6b7078;
+    --success-green: #3f6b52;
+    --hairline: rgba(27,42,65,0.14);
+    --shadow: rgba(27,42,65,0.18);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background: radial-gradient(120% 140% at 15% -10%, #fbf8f1 0%, var(--dial-cream) 45%, var(--dial-cream-2) 100%);
+    color: var(--navy);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+
+  .wrap{ max-width: 620px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  header.masthead{
+    display:flex; align-items: baseline; justify-content: space-between;
+    gap: 16px; margin-bottom: 32px; padding-bottom: 20px;
+    border-bottom: 1px solid var(--hairline); flex-wrap: wrap;
+  }
+  .brand{
+    font-family: 'Fraunces', serif; font-weight: 700; font-style: italic;
+    font-size: 32px; letter-spacing: -0.01em; color: var(--navy);
+  }
+  .brand span{ color: var(--chrono-red); font-style: normal; }
+  .tagline{
+    font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--graphite); font-weight: 600; max-width: 220px; text-align: right;
+  }
+
+  /* ===================== PLACEHOLDER VIEW ===================== */
+
+  .clock-hero{
+    text-align:center;
+    padding: 34px 20px 30px;
+    background: var(--dial-cream);
+    border: 1px solid var(--hairline);
+    border-radius: 4px;
+    margin-bottom: 28px;
+    position: relative;
+  }
+  .clock-hero::before{
+    content:"";
+    position:absolute; top:-9px; left:50%; transform: translateX(-50%);
+    width: 16px; height: 16px; background: var(--brass); border-radius: 50%;
+    box-shadow: 0 2px 4px var(--shadow);
+  }
+  .clock-status{
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    font-weight: 700; color: var(--graphite); margin-bottom: 10px;
+  }
+  .clock-status.submitted{ color: var(--success-green); }
+  .clock-time{
+    font-family: 'Space Mono', monospace; font-weight: 700;
+    font-size: 46px; color: var(--navy); letter-spacing: 0.01em;
+  }
+  .clock-time .secs{ color: var(--chrono-red); }
+  .clock-msg{
+    font-size: 13.5px; color: var(--navy-soft); line-height: 1.6;
+    margin: 14px auto 0; max-width: 360px;
+  }
+  .clock-msg b{ color: var(--navy); }
+
+  /* sub-dials */
+  .subdials{ display:flex; justify-content:center; gap: 56px; margin: 8px 0 40px; flex-wrap: wrap; }
+  .subdial{ position: relative; width: 100px; height: 100px; }
+  .subdial-svg{ width:100%; height:100%; }
+  .subdial-face{ fill: var(--dial-cream-2); }
+  .subdial-ring{ fill:none; stroke: var(--brass); stroke-width: 2; }
+  .subdial-track{ fill:none; stroke: var(--hairline); stroke-width: 6; }
+  .subdial-progress{
+    fill:none; stroke: var(--navy-soft); stroke-width: 6; stroke-linecap: round;
+    transform-origin: 50px 50px; transform: rotate(-90deg);
+    transition: stroke-dashoffset 0.4s ease;
+  }
+  .subdial-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .subdial-value{ font-family: 'Space Mono', monospace; font-weight: 700; font-size: 16px; color: var(--navy); }
+  .subdial-label{
+    position: absolute; bottom: -20px; left: 0; right: 0; text-align: center;
+    font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--graphite); font-weight: 700;
+  }
+
+  /* lap sheet */
+  .sheet{ background: var(--dial-cream); border: 1px solid var(--hairline); border-radius: 4px; overflow: hidden; }
+  .sheet-head{
+    display:flex; justify-content: space-between; align-items: center;
+    padding: 15px 20px; border-bottom: 1px solid var(--hairline);
+  }
+  .sheet-head h2{ font-family:'Fraunces', serif; font-weight: 600; font-size: 16px; margin: 0; }
+  .reset-btn{
+    font-family: 'Inter', sans-serif; font-size: 11.5px; font-weight: 600; color: var(--graphite);
+    background: none; border: 1px solid var(--hairline); border-radius: 3px;
+    padding: 6px 11px; cursor: pointer; transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .reset-btn:hover{ color: var(--chrono-red); border-color: var(--chrono-red); }
+
+  .lap-table{ width: 100%; border-collapse: collapse; font-family: 'Space Mono', monospace; font-size: 12.5px; }
+  .lap-table th{
+    text-align: left; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--graphite); font-weight: 700; padding: 9px 20px; font-family: 'Inter', sans-serif;
+    background: rgba(27,42,65,0.03);
+  }
+  .lap-table td{ padding: 9px 20px; border-top: 1px solid var(--hairline); color: var(--navy); }
+  .lap-table tr:first-child td{ border-top: none; }
+  .lap-table td.status-dnf{ color: var(--chrono-red); }
+  .lap-table td.status-ok{ color: var(--success-green); }
+  .empty-state{ padding: 30px 20px; text-align: center; color: var(--graphite); font-size: 13px; line-height: 1.6; }
+
+  /* ===================== FORM VIEW ===================== */
+
+  .live-banner{
+    display:flex; align-items:center; justify-content: space-between;
+    background: var(--navy); color: var(--dial-cream);
+    padding: 12px 18px; border-radius: 4px 4px 0 0;
+  }
+  .live-banner .dot{
+    display:inline-block; width:8px; height:8px; border-radius:50%;
+    background: var(--chrono-red); margin-right: 8px;
+  }
+  @media (prefers-reduced-motion: no-preference){
+    .live-banner .dot{ animation: blink 1.1s ease-in-out infinite; }
+  }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+  .live-label{ font-family:'Space Mono', monospace; font-size: 12.5px; letter-spacing: 0.08em; text-transform: uppercase; font-weight:700; }
+  .live-elapsed{ font-family:'Space Mono', monospace; font-size: 18px; font-weight:700; }
+
+  .ticket{
+    background: var(--dial-cream); border: 1px solid var(--hairline); border-top:none;
+    border-radius: 0 0 4px 4px; box-shadow: 0 18px 40px -24px var(--shadow);
+    padding: 26px 26px 22px; margin-bottom: 28px;
+  }
+
+  .field{ display:flex; flex-direction:column; gap:6px; margin-bottom: 16px; }
+  .field label{
+    font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 700; color: var(--navy-soft);
+  }
+  .field input, .field select{
+    font-family: 'Inter', sans-serif; font-size: 15px; padding: 11px 12px;
+    border: 1px solid var(--hairline); border-radius: 3px; background: #fffdf9; color: var(--navy);
+    outline: none; transition: border-color 0.15s ease, box-shadow 0.15s ease; width: 100%;
+  }
+  .field input:focus, .field select:focus{
+    border-color: var(--brass); box-shadow: 0 0 0 3px rgba(169,129,79,0.18);
+  }
+  .field input::placeholder{ color: #b7b0a0; }
+
+  .clock-in-btn{
+    width: 100%; font-family: 'Space Mono', monospace; font-weight: 700; font-size: 14px;
+    letter-spacing: 0.05em; text-transform: uppercase; padding: 14px 26px;
+    background: var(--navy); color: var(--dial-cream); border: none; border-radius: 3px;
+    cursor: pointer; transition: background 0.15s ease, transform 0.05s ease; margin-top: 6px;
+  }
+  .clock-in-btn:hover{ background: var(--chrono-red); }
+  .clock-in-btn:active{ transform: translateY(1px); }
+
+  .rules{ font-size: 13px; line-height: 1.6; color: var(--navy-soft); margin: 0 0 24px; }
+  .rules b{ color: var(--navy); font-weight: 600; }
+
+  footer.note{ margin-top: 24px; font-size: 11.5px; color: var(--graphite); text-align: center; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <div class="brand">Roth<span>Trainer</span></div>
+    <div class="tagline">Training the hardest part of Roth</div>
+  </header>
+
+  <div id="app"></div>
+
+  <footer class="note">
+    Everything on this page runs in your browser only — nothing is submitted anywhere.
+    Your lap history is kept in this browser's local storage, tied to this file, so it survives a refresh.
+  </footer>
+</div>
+
+<script>
+(function(){
+
+  // ---------- Nationality list ----------
+  const NATIONALITIES = [
+    "Afghan","Albanian","Algerian","American","Andorran","Angolan","Argentine","Armenian","Australian",
+    "Austrian","Azerbaijani","Bahamian","Bahraini","Bangladeshi","Barbadian","Belarusian","Belgian",
+    "Belizean","Beninese","Bhutanese","Bolivian","Bosnian","Botswanan","Brazilian","British","Bruneian",
+    "Bulgarian","Burkinabe","Burmese","Burundian","Cambodian","Cameroonian","Canadian","Cape Verdean",
+    "Central African","Chadian","Chilean","Chinese","Colombian","Comoran","Congolese","Costa Rican",
+    "Croatian","Cuban","Cypriot","Czech","Danish","Djiboutian","Dominican","Dutch","East Timorese",
+    "Ecuadorean","Egyptian","Emirati","English","Equatorial Guinean","Eritrean","Estonian","Ethiopian",
+    "Fijian","Filipino","Finnish","French","Gabonese","Gambian","Georgian","German","Ghanaian","Greek",
+    "Greenlandic","Grenadian","Guatemalan","Guinean","Guyanese","Haitian","Honduran","Hungarian",
+    "Icelandic","Indian","Indonesian","Iranian","Iraqi","Irish","Israeli","Italian","Ivorian","Jamaican",
+    "Japanese","Jordanian","Kazakh","Kenyan","Kittitian","Kosovar","Kuwaiti","Kyrgyz","Lao","Latvian",
+    "Lebanese","Liberian","Libyan","Liechtensteiner","Lithuanian","Luxembourgish","Macedonian",
+    "Malagasy","Malawian","Malaysian","Maldivian","Malian","Maltese","Marshallese","Mauritanian",
+    "Mauritian","Mexican","Micronesian","Moldovan","Monacan","Mongolian","Montenegrin","Moroccan",
+    "Mosotho","Mozambican","Namibian","Nauruan","Nepalese","New Zealander","Nicaraguan","Nigerien",
+    "Nigerian","North Korean","Northern Irish","Norwegian","Omani","Pakistani","Palauan","Palestinian",
+    "Panamanian","Papua New Guinean","Paraguayan","Peruvian","Polish","Portuguese","Qatari","Romanian",
+    "Russian","Rwandan","Salvadoran","Samoan","San Marinese","Sao Tomean","Saudi","Scottish","Senegalese",
+    "Serbian","Seychellois","Sierra Leonean","Singaporean","Slovak","Slovenian","Solomon Islander",
+    "Somali","South African","South Korean","South Sudanese","Spanish","Sri Lankan","Sudanese",
+    "Surinamese","Swazi","Swedish","Swiss","Syrian","Taiwanese","Tajik","Tanzanian","Thai","Togolese",
+    "Tongan","Trinidadian","Tunisian","Turkish","Turkmen","Tuvaluan","Ugandan","Ukrainian","Uruguayan",
+    "Uzbek","Vanuatuan","Vatican","Venezuelan","Vietnamese","Welsh","Yemeni","Zambian","Zimbabwean"
+  ];
+
+  const STORAGE_KEY = 'sprintChronoState_v2';
+  const SUBDIAL_SCALE_S = 20;
+  const app = document.getElementById('app');
+  let tickHandle = null;
+
+  // ---------- Persistence ----------
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) throw new Error('empty');
+      const parsed = JSON.parse(raw);
+      if(!Array.isArray(parsed.attempts)) throw new Error('bad shape');
+      return parsed;
+    }catch(e){
+      return { attempts: [], lastSubmittedRoundKey: null, lastShownRoundKey: null };
+    }
+  }
+  function saveState(s){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+    catch(e){ /* storage unavailable — training continues without persistence */ }
+  }
+
+  function minuteKey(d){ return Math.floor(d.getTime()/60000); }
+  function roundStartMs(key){ return key*60000; }
+  function fmtSeconds(ms){ return (ms/1000).toFixed(3) + 's'; }
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  let db = loadState();
+
+  // ---------- Detect a missed (unsubmitted) previous round ----------
+  (function reconcileMissedRound(){
+    const nowKey = minuteKey(new Date());
+    if(db.lastShownRoundKey !== null &&
+       db.lastShownRoundKey !== nowKey &&
+       db.lastShownRoundKey !== db.lastSubmittedRoundKey){
+      db.attempts.push({
+        n: db.attempts.length + 1,
+        ms: null,
+        dnf: true,
+        timestamp: new Date(roundStartMs(db.lastShownRoundKey)).toISOString()
+      });
+      saveState(db);
+    }
+  })();
+
+  // ---------- Stats ----------
+  function computeStats(){
+    const successful = db.attempts.filter(a => !a.dnf);
+    const avgAllMs = successful.length ? successful.reduce((s,a)=>s+a.ms,0)/successful.length : null;
+    const lastThree = successful.slice(-3);
+    const avgLast3Ms = lastThree.length ? lastThree.reduce((s,a)=>s+a.ms,0)/lastThree.length : null;
+    return { avgAllMs, avgLast3Ms };
+  }
+
+  function subdialArc(ms){
+    const SUB_CIRC = 2 * Math.PI * 38;
+    if(ms === null) return { circ: SUB_CIRC, offset: SUB_CIRC };
+    const frac = Math.min(1, (ms/1000) / SUBDIAL_SCALE_S);
+    return { circ: SUB_CIRC, offset: SUB_CIRC * (1 - frac) };
+  }
+
+  // ---------- Views ----------
+  function stopTicking(){ if(tickHandle){ clearInterval(tickHandle); tickHandle = null; } }
+
+  function renderPlaceholder(justSubmittedMs){
+    stopTicking();
+    const { avgAllMs, avgLast3Ms } = computeStats();
+    const avgAllArc = subdialArc(avgAllMs);
+    const avgLast3Arc = subdialArc(avgLast3Ms);
+
+    const last10 = db.attempts.slice(-10).reverse();
+    const rowsHtml = last10.length ? (
+      '<table class="lap-table"><thead><tr><th>Lap</th><th>Time</th><th>Status</th><th>Clocked</th></tr></thead><tbody>' +
+      last10.map(a=>{
+        const time = a.dnf ? '—' : fmtSeconds(a.ms);
+        const status = a.dnf ? 'DNF' : 'OK';
+        const statusClass = a.dnf ? 'status-dnf' : 'status-ok';
+        const t = new Date(a.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+        return '<tr><td>'+a.n+'</td><td>'+time+'</td><td class="'+statusClass+'">'+status+'</td><td>'+t+'</td></tr>';
+      }).join('') + '</tbody></table>'
+    ) : '<div class="empty-state">No laps yet — refresh right at the top of a minute to catch the next round.</div>';
+
+    const nextRoundDate = new Date(roundStartMs(minuteKey(new Date()) + 1));
+    const nextRoundLabel = pad(nextRoundDate.getHours()) + ':' + pad(nextRoundDate.getMinutes());
+
+    const submittedNote = justSubmittedMs !== undefined
+      ? '<div class="clock-status submitted">Clocked in</div><div class="clock-time">'+ (justSubmittedMs/1000).toFixed(3) +'<span class="secs">s</span></div>' +
+        '<div class="clock-msg">Next subscription opens at <b>'+ nextRoundLabel +'</b>.</div>'
+      : '<div class="clock-status">Standing by</div>' +
+        '<div class="clock-msg">Next subscription opens at <b>'+ nextRoundLabel +'</b>.</div>';
+
+    app.innerHTML =
+      '<div class="clock-hero">' + submittedNote +
+      '</div>' +
+      '<div class="subdials">' +
+        '<div class="subdial"><svg class="subdial-svg" viewBox="0 0 100 100">' +
+          '<circle class="subdial-face" cx="50" cy="50" r="48"></circle>' +
+          '<circle class="subdial-track" cx="50" cy="50" r="38"></circle>' +
+          '<circle class="subdial-progress" cx="50" cy="50" r="38" style="stroke-dasharray:'+avgAllArc.circ+'; stroke-dashoffset:'+avgAllArc.offset+';"></circle>' +
+          '<circle class="subdial-ring" cx="50" cy="50" r="48"></circle></svg>' +
+          '<div class="subdial-center"><div class="subdial-value">'+ (avgAllMs!==null ? (avgAllMs/1000).toFixed(2)+'s' : '—') +'</div></div>' +
+          '<div class="subdial-label">Avg. all</div></div>' +
+        '<div class="subdial"><svg class="subdial-svg" viewBox="0 0 100 100">' +
+          '<circle class="subdial-face" cx="50" cy="50" r="48"></circle>' +
+          '<circle class="subdial-track" cx="50" cy="50" r="38"></circle>' +
+          '<circle class="subdial-progress" cx="50" cy="50" r="38" style="stroke-dasharray:'+avgLast3Arc.circ+'; stroke-dashoffset:'+avgLast3Arc.offset+';"></circle>' +
+          '<circle class="subdial-ring" cx="50" cy="50" r="48"></circle></svg>' +
+          '<div class="subdial-center"><div class="subdial-value">'+ (avgLast3Ms!==null ? (avgLast3Ms/1000).toFixed(2)+'s' : '—') +'</div></div>' +
+          '<div class="subdial-label">Avg. last 3</div></div>' +
+      '</div>' +
+      '<div class="sheet"><div class="sheet-head"><h2>Last 10 laps</h2><button class="reset-btn" id="resetBtn">Clear history</button></div>' +
+        '<div id="sheetBody">' + rowsHtml + '</div>' +
+      '</div>';
+
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      db = { attempts: [], lastSubmittedRoundKey: null, lastShownRoundKey: null };
+      saveState(db);
+      renderPlaceholder();
+    });
+  }
+
+  function renderForm(roundKey){
+    stopTicking();
+    const startMs = roundStartMs(roundKey);
+
+    app.innerHTML =
+      '<p class="rules">This round is <b>live</b>. Fill in every field and hit <b>Clock in</b> as fast as you can — ' +
+      'your time is measured from the moment this round officially opened, so a fast refresh matters as much as a fast fill.</p>' +
+      '<div class="live-banner"><span class="live-label"><span class="dot"></span>Live now</span><span class="live-elapsed" id="liveElapsed">0.000s</span></div>' +
+      '<div class="ticket">' +
+        '<form id="sprintForm" autocomplete="off">' +
+          '<div class="field"><label for="fName">First name</label><input type="text" id="fName" placeholder="Jonas" required></div>' +
+          '<div class="field"><label for="fSurname">Surname</label><input type="text" id="fSurname" placeholder="Vandamme" required></div>' +
+          '<div class="field"><label for="fDob">Date of birth (dd.mm.yyyy)</label><input type="text" id="fDob" placeholder="14.03.1994" inputmode="numeric" maxlength="10" required></div>' +
+          '<div class="field"><label for="fNationality">Nationality</label><select id="fNationality" required><option value="" disabled selected>Select…</option></select></div>' +
+          '<div class="field"><label for="fEmail">E-mail address</label><input type="email" id="fEmail" placeholder="jonas.vandamme@example.com" required></div>' +
+          '<button type="submit" class="clock-in-btn">Clock in</button>' +
+        '</form>' +
+      '</div>';
+
+    const natSelect = document.getElementById('fNationality');
+    NATIONALITIES.forEach(n=>{
+      const opt = document.createElement('option');
+      opt.value = n; opt.textContent = n;
+      natSelect.appendChild(opt);
+    });
+
+    const dobInput = document.getElementById('fDob');
+    dobInput.addEventListener('input', ()=>{
+      let digits = dobInput.value.replace(/\D/g,'').slice(0,8);
+      let out = '';
+      if(digits.length > 0) out = digits.slice(0,2);
+      if(digits.length >= 3) out += '.' + digits.slice(2,4);
+      if(digits.length >= 5) out += '.' + digits.slice(4,8);
+      dobInput.value = out;
+    });
+
+    const elapsedEl = document.getElementById('liveElapsed');
+    const paint = ()=>{ elapsedEl.textContent = ((Date.now() - startMs)/1000).toFixed(3) + 's'; };
+    paint();
+    tickHandle = setInterval(paint, 47);
+
+    document.getElementById('fName').focus();
+
+    document.getElementById('sprintForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const elapsedMs = Date.now() - startMs;
+      db.attempts.push({ n: db.attempts.length+1, ms: elapsedMs, dnf: false, timestamp: new Date().toISOString() });
+      db.lastSubmittedRoundKey = roundKey;
+      saveState(db);
+      renderPlaceholder(elapsedMs);
+    });
+  }
+
+  // ---------- Entry point ----------
+  const nowKey = minuteKey(new Date());
+  if(db.lastSubmittedRoundKey === nowKey){
+    renderPlaceholder();
+  } else {
+    db.lastShownRoundKey = nowKey;
+    saveState(db);
+    renderForm(nowKey);
+  }
+
+})();
+</script>
+</body>
+</html>
